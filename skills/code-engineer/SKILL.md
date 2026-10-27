@@ -39,6 +39,29 @@ If you need to install new Python packages, install them through the Tsinghua Py
 pip install [python package] -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
+## Version-Sensitive Library APIs
+
+Scientific libraries change calling conventions between releases. Before the
+first call to a version-sensitive API, confirm the installed version and use the
+signature for that version. If a call raises `TypeError` or `AttributeError`, do
+not retry guessed argument shapes; inspect the installed signature or docstring,
+then make one corrected call.
+
+### lmfit confidence intervals (pinned 1.3.4)
+
+Use the call that matches the result object:
+
+| Fit path | Result type | Correct call |
+|---|---|---|
+| `model = lmfit.Model(...)`; `result = model.fit(...)` | `ModelResult` | `result.conf_interval(sigmas=[1, 2])` |
+| `minimizer = lmfit.Minimizer(...)`; `result = minimizer.minimize()` | `MinimizerResult` | `lmfit.conf_interval(minimizer, result, sigmas=[1, 2])` |
+
+`lmfit.conf_interval(result)` and `MinimizerResult.conf_interval()` fail in
+lmfit 1.3.4. Check `result.errorbars` before requesting intervals; if it is
+`False`, fix the fit instead of presenting intervals. Before writing the first
+lmfit confidence-interval call, read
+[references/lmfit-confidence-intervals.md](references/lmfit-confidence-intervals.md).
+
 ## Workflow
 
 ### Step 1: Understand Requirements
@@ -192,7 +215,7 @@ After code execution:
 - When code produces tables or statistics, format them clearly for readability
 - Suggest follow-up analyses or refinements when patterns are interesting or inconclusive
 - Offer to export results if the user wants to keep them
-- If execution fails, explain the error context (e.g., missing library, data schema mismatch) and suggest a corrected approach
+- If execution fails, report the installed library version and the exact exception. For API-shape errors (`TypeError`/`AttributeError`), inspect the installed signature and make one corrected call; do not hide the failure or claim success
 
 ## Structured Export
 
